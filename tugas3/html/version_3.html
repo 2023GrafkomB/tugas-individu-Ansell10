@@ -26,16 +26,31 @@
              }
         </script>
 
+        <!-- fragment shader -->
         <script id="fShader" type="x-shader/x-fragment">
-                precision mediump float;
-                varying vec2 vTextureCoordinates;
-                uniform sampler2D uSampler;
+            precision mediump float;
+            varying vec2 vTextureCoordinates;
+            uniform sampler2D uSampler;
+            
+            uniform float uAmbientLightIntensity;
+            uniform float uDiffuseLightIntensity;
+            uniform float uSpecularLightIntensity;
 
-                void main()
-                {
-                    gl_FragColor = texture2D(uSampler, vTextureCoordinates);
-                }
-            </script>
+            void main() {
+                vec3 ambientColor = vec3(0.2, 0.2, 0.2); // Warna ambient light
+                vec3 diffuseColor = vec3(1.0, 1.0, 1.0); // Warna diffuse light
+                vec3 specularColor = vec3(1.0, 1.0, 1.0); // Warna specular light
+
+                vec4 texelColor = texture2D(uSampler, vTextureCoordinates);
+
+                // Hitung cahaya ambient, difus, dan spekuler
+                vec3 lightColor = uAmbientLightIntensity * ambientColor +
+                                  uDiffuseLightIntensity * diffuseColor +
+                                  uSpecularLightIntensity * specularColor;
+
+                gl_FragColor = vec4(texelColor.rgb * lightColor, texelColor.a);
+            }
+        </script>
 
         <script>
 
@@ -151,6 +166,10 @@
                 perspectiveViewUniformPointer = gl.getUniformLocation(shaderProgram, "uPerspectiveViewMatrix");
 
                 samplerUniformPointer = gl.getUniformLocation(shaderProgram, "uSampler");
+                
+                ambientLightUniformPointer = gl.getUniformLocation(shaderProgram, "uAmbientLightIntensity");
+                diffuseLightUniformPointer = gl.getUniformLocation(shaderProgram, "uDiffuseLightIntensity");
+                specularLightUniformPointer = gl.getUniformLocation(shaderProgram, "uSpecularLightIntensity");
             }
 
             function setupBuffers()
@@ -436,6 +455,9 @@
                 mat4.perspective(perspectiveMatrix, cameraAngle, 1, 0.01, 10000); // camera perspective
                 mat4.multiply(pvMatrix, perspectiveMatrix, viewMatrix);
                 gl.uniformMatrix4fv(perspectiveViewUniformPointer, false, new Float32Array(pvMatrix));
+                gl.uniform1f(ambientLightUniformPointer, parseFloat(document.getElementById("ambientLightIntensity").value));
+                gl.uniform1f(diffuseLightUniformPointer, parseFloat(document.getElementById("diffuseLightIntensity").value));
+                gl.uniform1f(specularLightUniformPointer, parseFloat(document.getElementById("specularLightIntensity").value));
 
                 // translation of body parts
                 var bodyTranslationVertices = [ // body - translation
@@ -658,6 +680,7 @@
             </div>
         </div>
         <div class="split right">
+
             <div class="centered">
                 <div>
                     Camera Angle: <label for="cameraAngleText"></label><input type="text" id="cameraAngleText" min="0" value="90"> <br><br>
@@ -675,6 +698,18 @@
                         <button class="button button1" onClick=startAnim()>Start</button>
                         <button class="button button1" onClick=stopAnim()>Stop</button>
                 </div>
+                <div>
+                    <br>
+                        <h2>Pencahayaan</h2>
+                            <label for="ambientLightIntensity">Intensitas Cahaya Ambient:</label>
+                            <input type="range" id="ambientLightIntensity" min="0" max="1" step="0.1" value="0.5">
+            
+                            <label for="diffuseLightIntensity">Intensitas Cahaya Difusi:</label>
+                            <input type="range" id="diffuseLightIntensity" min="0" max="1" step="0.1" value="0.7">
+            
+                            <label for="specularLightIntensity">Intensitas Cahaya Spekuler:</label>
+                            <input type="range" id="specularLightIntensity" min="0" max="1" step="0.1" value="0.9">
+                    </div>
             </div>
         </div>
     </body>
